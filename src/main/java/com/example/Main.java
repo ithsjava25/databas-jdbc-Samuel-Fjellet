@@ -24,10 +24,6 @@ public class Main {
                             "as system properties (-Dkey=value) or environment variables.");
         }
 
-        try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPass)) {
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
         //Todo: Starting point for your code
         cliWriter();
         String arg = IO.readln("Please provide the command line arguments to execute: ");
@@ -47,6 +43,10 @@ public class Main {
                 case "2":
                 case "Get":
                     databaseGetter(connection);
+                    break;
+                case "3":
+                case "Count":
+                    databaseCounter(connection);
                     break;
             }
 
@@ -87,6 +87,19 @@ public class Main {
             v = System.getenv(envKey);
         }
         return (v == null || v.trim().isEmpty()) ? null : v.trim();
+    }
+
+    private void databaseCounter(Connection connection) throws SQLException {
+        String year = IO.readln("Provide year: ");
+        String query = "select count(*) from moon_mission where year(launch_date) = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, year);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String message = "The amount of missions launched year " + year + " was " + rs.getString(1) + ".";
+                System.out.println(message);
+            }
+        }
     }
 
     private void databaseGetter(Connection connection) throws SQLException {
