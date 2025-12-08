@@ -1,8 +1,6 @@
 package com.example;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Arrays;
 
 public class Main {
@@ -31,7 +29,38 @@ public class Main {
             throw new RuntimeException(e);
         }
         //Todo: Starting point for your code
+        cliWriter();
+        String arg = IO.readln("Please provide the command line arguments to execute: ");
+
+
+        try(Connection connection = DriverManager.getConnection(
+                jdbcUrl,
+                dbUser,
+                dbPass)){
+
+            switch  (arg) {
+                case "1":
+                case "List":
+                    databaseLister(connection);
+                    break;
+
+                case "2":
+                case "Get":
+                    databaseGetter(connection);
+                    break;
+            }
+
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+
+
     }
+
+
+
 
     /**
      * Determines if the application is running in development mode based on system properties,
@@ -58,5 +87,47 @@ public class Main {
             v = System.getenv(envKey);
         }
         return (v == null || v.trim().isEmpty()) ? null : v.trim();
+    }
+
+    private void databaseGetter(Connection connection) throws SQLException {
+        String id = IO.readln("Provide the mission id: ");
+        String query = "select * from moon_mission where mission_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String message = rs.getString(1)
+                        + " " + rs.getString(2)
+                        + " " + rs.getString(3)
+                        + " " + rs.getString(4)
+                        + " " + rs.getString(5)
+                        + " " + rs.getString(6)
+                        + " " + rs.getString(7);
+                System.out.println(message);
+            }
+        }
+    }
+
+    private void databaseLister(Connection connection) throws SQLException {
+        String query = "select spacecraft from moon_mission";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                System.out.println(rs.getString(1));
+            }
+        }
+    }
+
+    private static void cliWriter() {
+        System.out.println("""
+                   1) List moon missions (prints spacecraft names from `moon_mission`).
+                   2) Get a moon mission by mission_id (prints details for that mission).
+                   3) Count missions for a given year (prompts: year; prints the number of missions launched that year).
+                   4) Create an account (prompts: first name, last name, ssn, password; prints confirmation).
+                   5) Update an account password (prompts: user_id, new password; prints confirmation).
+                   6) Delete an account (prompts: user_id; prints confirmation).
+                   0) Exit.
+                """);
     }
 }
