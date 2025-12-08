@@ -25,37 +25,44 @@ public class Main {
         }
 
         //Todo: Starting point for your code
-        cliWriter();
-        String arg = IO.readln("Please provide the command line arguments to execute: ");
+        boolean running = true;
+        while(running) {
+
+            cliWriter();
+            String arg = IO.readln("Please provide the command line arguments to execute: ");
 
 
-        try(Connection connection = DriverManager.getConnection(
-                jdbcUrl,
-                dbUser,
-                dbPass)){
+            try (Connection connection = DriverManager.getConnection(
+                    jdbcUrl,
+                    dbUser,
+                    dbPass)) {
 
-            switch  (arg) {
-                case "1":
-                case "List":
-                    databaseLister(connection);
-                    break;
+                switch (arg) {
+                    case "1":
+                    case "List":
+                        databaseLister(connection);
+                        break;
 
-                case "2":
-                case "Get":
-                    databaseGetter(connection);
-                    break;
-                case "3":
-                case "Count":
-                    databaseCounter(connection);
-                    break;
+                    case "2":
+                    case "Get":
+                        databaseGetter(connection);
+                        break;
+                    case "3":
+                    case "Count":
+                        databaseCounter(connection);
+                        break;
+                    case "0":
+                    case "Exit":
+                        running = false;
+
+                }
+
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
 
+            System.out.println(" ");
         }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-
 
     }
 
