@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 public class Main {
 
+    String temp;
+
     static void main(String[] args) {
         if (isDevMode(args)) {
             DevDatabaseInitializer.start();
@@ -18,6 +20,8 @@ public class Main {
         String dbUser = resolveConfig("APP_DB_USER", "APP_DB_USER");
         String dbPass = resolveConfig("APP_DB_PASS", "APP_DB_PASS");
 
+
+
         if (jdbcUrl == null || dbUser == null || dbPass == null) {
             throw new IllegalStateException(
                     "Missing DB configuration. Provide APP_JDBC_URL, APP_DB_USER, APP_DB_PASS " +
@@ -25,44 +29,65 @@ public class Main {
         }
 
         //Todo: Starting point for your code
-        boolean running = true;
-        while(running) {
-
-            cliWriter();
-            String arg = IO.readln("Please provide the command line arguments to execute: ");
-
 
             try (Connection connection = DriverManager.getConnection(
                     jdbcUrl,
                     dbUser,
                     dbPass)) {
 
-                switch (arg) {
-                    case "1":
-                    case "List":
-                        databaseLister(connection);
-                        break;
+                boolean running = true;
 
-                    case "2":
-                    case "Get":
-                        databaseGetter(connection);
-                        break;
-                    case "3":
-                    case "Count":
-                        databaseCounter(connection);
-                        break;
-                    case "0":
-                    case "Exit":
-                        running = false;
+                while (running) {
+                    String userName = IO.readln("username: ");
+                    String password = IO.readln("password: ");
 
+                    String query = "select count(*) from account where name = ? and password = ?";
+                    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                        stmt.setString(1, userName);
+                        stmt.setString(2, password);
+                        ResultSet rs = stmt.executeQuery();
+                        while (rs.next()) {
+                            if (rs.getInt(1) != 0) {
+                                System.out.println("Valid account");
+                                running = false;
+                            } else {
+                                temp = IO.readln("Invalid username or password, would you like to exit? (0)");
+                                if (temp.equals("0"))
+                                    running = false;
+                            }
+                        }
+                    }
                 }
+                running = !temp.equals("0");
+                while(running) {
+                    cliWriter();
+                    String arg = IO.readln("Please provide the command line arguments to execute: ");
 
+                    switch (arg) {
+                        case "1":
+                        case "List":
+                            databaseLister(connection);
+                            break;
+
+                        case "2":
+                        case "Get":
+                            databaseGetter(connection);
+                            break;
+                        case "3":
+                        case "Count":
+                            databaseCounter(connection);
+                            break;
+                        case "0":
+                        case "Exit":
+                            running = false;
+                    }
+                    System.out.println(" ");
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
 
-            System.out.println(" ");
-        }
+
 
     }
 
