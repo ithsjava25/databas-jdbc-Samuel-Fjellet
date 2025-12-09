@@ -3,6 +3,8 @@ package com.example;
 import java.sql.*;
 import java.util.Arrays;
 
+import static org.testcontainers.shaded.org.apache.commons.lang3.StringUtils.substring;
+
 public class Main {
 
     String temp;
@@ -35,30 +37,9 @@ public class Main {
                     dbUser,
                     dbPass)) {
 
-                boolean running = true;
+                startUpLogIn(connection);
 
-                while (running) {
-                    String userName = IO.readln("username: ");
-                    String password = IO.readln("password: ");
-
-                    String query = "select count(*) from account where name = ? and password = ?";
-                    try (PreparedStatement stmt = connection.prepareStatement(query)) {
-                        stmt.setString(1, userName);
-                        stmt.setString(2, password);
-                        ResultSet rs = stmt.executeQuery();
-                        while (rs.next()) {
-                            if (rs.getInt(1) != 0) {
-                                System.out.println("Valid account");
-                                running = false;
-                            } else {
-                                temp = IO.readln("Invalid username or password, would you like to exit? (0)");
-                                if (temp.equals("0"))
-                                    running = false;
-                            }
-                        }
-                    }
-                }
-                running = !temp.equals("0");
+                boolean running = !temp.equals("0");
                 while(running) {
                     cliWriter();
                     String arg = IO.readln("Please provide the command line arguments to execute: ");
@@ -76,6 +57,14 @@ public class Main {
                         case "3":
                         case "Count":
                             databaseCounter(connection);
+                            break;
+                        case "4":
+                        case "Create":
+                            databaseCreator(connection);
+                            break;
+                        case "5":
+                        case "Update":
+                            databaseUpdated(connection);
                             break;
                         case "0":
                         case "Exit":
@@ -119,6 +108,76 @@ public class Main {
             v = System.getenv(envKey);
         }
         return (v == null || v.trim().isEmpty()) ? null : v.trim();
+    }
+
+    private void startUpLogIn(Connection connection) throws SQLException {
+        boolean running = true;
+        while (running) {
+            String userName = IO.readln("username: ");
+            String password = IO.readln("password: ");
+            String query = "select count(*) from account where name = ? and password = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                stmt.setString(1, userName);
+                stmt.setString(2, password);
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    if (rs.getInt(1) != 0) {
+                        System.out.println("Valid account");
+                        running = false;
+                    } else {
+                        temp = IO.readln("Invalid username or password, would you like to exit? (0)");
+                        if (temp.equals("0"))
+                            running = false;
+                    }
+                }
+            }
+        }
+    }
+
+    private void databaseUpdated(Connection connection) throws SQLException {
+        boolean check = false;
+
+        String inputId = IO.readln("Please enter the user_id of the account you would like to update: ");
+        String query = "select count(*) from account where user_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, inputId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                if (rs.getInt(1) != 0)
+                    check = true;
+            }
+        }
+
+        if (check) {
+            String newPassword = IO.readln("New password: ");
+            query = "update account set password=? where used_id =?";
+            try (PreparedStatement stmt = connection.prepareStatement(query)) {
+                stmt.setString(1, newPassword);
+                stmt.setString(2, inputId);
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    System.out.println("New password has been set.");
+                }
+            }
+        } else
+            System.out.println("invalid user_id");
+    }
+
+    private void databaseCreator(Connection connection) throws SQLException {
+        String firstnameInput = IO.readln("firstname: ");
+        String lastnameInput = IO.readln("lastname: ");
+        String ssnInput = IO.readln("ssn: ");
+        String passwordInput = IO.readln("password: ");
+        String nameInput = (substring(firstnameInput, 0, 2)).concat(substring(lastnameInput, 0, 2));
+
+        String query = "insert into account (first_name, last_name, ssn, password, name) values (firstnameInput, lastnameInput, ssnInput, passwordInput, nameInput)";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                System.out.println(rs.getString(1));
+                System.out.println("Account created successfully");
+            }
+        }
     }
 
     private void databaseCounter(Connection connection) throws SQLException {
