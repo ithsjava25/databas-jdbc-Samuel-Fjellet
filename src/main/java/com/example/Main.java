@@ -66,6 +66,10 @@ public class Main {
                         case "Update":
                             databaseUpdated(connection);
                             break;
+                        case "6":
+                        case "Delete":
+                            databaseDeleter(connection);
+                            break;
                         case "0":
                         case "Exit":
                             running = false;
@@ -130,6 +134,18 @@ public class Main {
                             running = false;
                     }
                 }
+            }
+        }
+    }
+
+    private void databaseDeleter(Connection connection) throws SQLException {
+        String idToDelete = IO.readln("Please enter the user_id to delete: ");
+        String query = "delete from account where user_id=?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, idToDelete);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                System.out.println("Account deleted.");
             }
         }
     }
