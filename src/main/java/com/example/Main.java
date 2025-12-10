@@ -153,10 +153,8 @@ public class Main {
         String query = "delete from account where user_id=?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, idToDelete);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                System.out.println("Account deleted.");
-            }
+            stmt.executeUpdate();
+            System.out.println("Account deleted.");
         }
     }
 
@@ -177,14 +175,12 @@ public class Main {
         if (check) {
             System.out.println("Provide new password: ");
             String newPassword = scanner.nextLine();
-            query = "update account set password=? where used_id =?";
+            query = "update account set password=? where user_id =?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, newPassword);
                 stmt.setString(2, inputId);
-                ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    System.out.println("New password has been set.");
-                }
+                stmt.executeUpdate();
+                System.out.println("New password updated.");
             }
         } else
             System.out.println("invalid user_id");
@@ -201,13 +197,15 @@ public class Main {
         String passwordInput = scanner.nextLine();
         String nameInput = (substring(firstnameInput, 0, 2)).concat(substring(lastnameInput, 0, 2));
 
-        String query = "insert into account (first_name, last_name, ssn, password, name) values (firstnameInput, lastnameInput, ssnInput, passwordInput, nameInput)";
+        String query = "insert into account (first_name, last_name, ssn, password, name) values (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                System.out.println(rs.getString(1));
-                System.out.println("Account created successfully");
-            }
+            stmt.setString(1, firstnameInput);
+            stmt.setString(2, lastnameInput);
+            stmt.setString(3, ssnInput);
+            stmt.setString(4, passwordInput);
+            stmt.setString(5, nameInput);
+            stmt.executeUpdate();
+            System.out.println("Account created successfully");
         }
     }
 
