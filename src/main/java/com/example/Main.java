@@ -2,12 +2,15 @@ package com.example;
 
 import java.sql.*;
 import java.util.Arrays;
+import java.util.Scanner;
 
 import static org.testcontainers.shaded.org.apache.commons.lang3.StringUtils.substring;
 
 public class Main {
 
-    String temp;
+    Scanner scanner = new Scanner(System.in);
+    String temp = "1";
+
 
     static void main(String[] args) {
         if (isDevMode(args)) {
@@ -38,44 +41,8 @@ public class Main {
                     dbPass)) {
 
                 startUpLogIn(connection);
+                cliMenu(connection);
 
-                boolean running = !temp.equals("0");
-                while(running) {
-                    cliWriter();
-                    String arg = IO.readln("Please provide the command line arguments to execute: ");
-
-                    switch (arg) {
-                        case "1":
-                        case "List":
-                            databaseLister(connection);
-                            break;
-
-                        case "2":
-                        case "Get":
-                            databaseGetter(connection);
-                            break;
-                        case "3":
-                        case "Count":
-                            databaseCounter(connection);
-                            break;
-                        case "4":
-                        case "Create":
-                            databaseCreator(connection);
-                            break;
-                        case "5":
-                        case "Update":
-                            databaseUpdated(connection);
-                            break;
-                        case "6":
-                        case "Delete":
-                            databaseDeleter(connection);
-                            break;
-                        case "0":
-                        case "Exit":
-                            running = false;
-                    }
-                    System.out.println(" ");
-                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -83,7 +50,6 @@ public class Main {
 
 
     }
-
 
 
 
@@ -117,8 +83,10 @@ public class Main {
     private void startUpLogIn(Connection connection) throws SQLException {
         boolean running = true;
         while (running) {
-            String userName = IO.readln("username: ");
-            String password = IO.readln("password: ");
+            System.out.println("Input Username: ");
+            String userName = scanner.next();
+            System.out.println("Input Password: ");
+            String password = scanner.next();
             String query = "select count(*) from account where name = ? and password = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, userName);
@@ -126,10 +94,10 @@ public class Main {
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     if (rs.getInt(1) != 0) {
-                        System.out.println("Valid account");
                         running = false;
                     } else {
-                        temp = IO.readln("Invalid username or password, would you like to exit? (0)");
+                        System.out.println("Invalid username or password, would you like to exit? (0) ");
+                        temp = scanner.nextLine();
                         if (temp.equals("0"))
                             running = false;
                     }
@@ -138,8 +106,50 @@ public class Main {
         }
     }
 
+    private void cliMenu(Connection connection) throws SQLException {
+        boolean running = !temp.equals("0");
+        while(running) {
+            cliWriter();
+            System.out.println("Please provide the command line arguments to execute: ");
+            String arg = scanner.nextLine();
+
+            switch (arg) {
+                case "1":
+                case "List":
+                    databaseLister(connection);
+                    break;
+
+                case "2":
+                case "Get":
+                    databaseGetter(connection);
+                    break;
+                case "3":
+                case "Count":
+                    databaseCounter(connection);
+                    break;
+                case "4":
+                case "Create":
+                    databaseCreator(connection);
+                    break;
+                case "5":
+                case "Update":
+                    databaseUpdated(connection);
+                    break;
+                case "6":
+                case "Delete":
+                    databaseDeleter(connection);
+                    break;
+                case "0":
+                case "Exit":
+                    running = false;
+            }
+            System.out.println(" ");
+        }
+    }
+
     private void databaseDeleter(Connection connection) throws SQLException {
-        String idToDelete = IO.readln("Please enter the user_id to delete: ");
+        System.out.println("Please enter the user_id to delete: ");
+        String idToDelete = scanner.nextLine();
         String query = "delete from account where user_id=?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, idToDelete);
@@ -152,8 +162,8 @@ public class Main {
 
     private void databaseUpdated(Connection connection) throws SQLException {
         boolean check = false;
-
-        String inputId = IO.readln("Please enter the user_id of the account you would like to update: ");
+        System.out.println("Please enter the user_id of the account you would like to update: ");
+        String inputId = scanner.nextLine();
         String query = "select count(*) from account where user_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, inputId);
@@ -165,7 +175,8 @@ public class Main {
         }
 
         if (check) {
-            String newPassword = IO.readln("New password: ");
+            System.out.println("Provide new password: ");
+            String newPassword = scanner.nextLine();
             query = "update account set password=? where used_id =?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, newPassword);
@@ -180,10 +191,14 @@ public class Main {
     }
 
     private void databaseCreator(Connection connection) throws SQLException {
-        String firstnameInput = IO.readln("firstname: ");
-        String lastnameInput = IO.readln("lastname: ");
-        String ssnInput = IO.readln("ssn: ");
-        String passwordInput = IO.readln("password: ");
+        System.out.println("Provide firstname: ");
+        String firstnameInput = scanner.nextLine();
+        System.out.println("Provide lastname: ");
+        String lastnameInput = scanner.nextLine();
+        System.out.println("Provide ssn: ");
+        String ssnInput = scanner.nextLine();
+        System.out.println("Provide password: ");
+        String passwordInput = scanner.nextLine();
         String nameInput = (substring(firstnameInput, 0, 2)).concat(substring(lastnameInput, 0, 2));
 
         String query = "insert into account (first_name, last_name, ssn, password, name) values (firstnameInput, lastnameInput, ssnInput, passwordInput, nameInput)";
@@ -197,7 +212,8 @@ public class Main {
     }
 
     private void databaseCounter(Connection connection) throws SQLException {
-        String year = IO.readln("Provide year: ");
+        System.out.println("Provide year: ");
+        String year = scanner.nextLine();
         String query = "select count(*) from moon_mission where year(launch_date) = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, year);
@@ -210,7 +226,8 @@ public class Main {
     }
 
     private void databaseGetter(Connection connection) throws SQLException {
-        String id = IO.readln("Provide the mission id: ");
+        System.out.println("Provide the mission id: ");
+        String id = scanner.nextLine();
         String query = "select * from moon_mission where mission_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
