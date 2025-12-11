@@ -69,21 +69,20 @@ public class Main {
             String userName = scanner.nextLine().trim();
             System.out.println("Input Password: ");
             String password = scanner.nextLine().trim();
-            String query = "select count(*) from account where name = ? and password = ?";
+            String query = "select 1 from account where name = ? and password = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, userName);
                 stmt.setString(2, password);
                 ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    if (rs.getInt(1) != 0) {
+                if (rs.next()) {
+                    running = false;
+                } else {
+                    System.out.println("Invalid username or password, would you like to exit? (0) ");
+                    temp = scanner.nextLine().trim();
+                    if (temp.equals("0"))
                         running = false;
-                    } else {
-                        System.out.println("Invalid username or password, would you like to exit? (0) ");
-                        temp = scanner.nextLine().trim();
-                        if (temp.equals("0"))
-                            running = false;
-                    }
                 }
+
             }
         }
     }
@@ -130,11 +129,21 @@ public class Main {
     private void databaseDeleter(Connection connection) throws SQLException {
         System.out.println("Please enter the user_id to delete: ");
         String idToDelete = scanner.nextLine();
+
+        String check = "select first_name, last_name from account where user_id=?";
+        try (PreparedStatement stmt = connection.prepareStatement(check)) {
+            stmt.setString(1, idToDelete);
+            ResultSet rs = stmt.executeQuery();
+            if (!rs.next()) {
+                System.out.println("Account doesn't exist.");
+                return;
+            }
+        }
         String query = "delete from account where user_id=?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, idToDelete);
-            stmt.executeUpdate();
-            System.out.println("Account deleted.");
+            int rows = stmt.executeUpdate();
+            System.out.println("Account deleted. Rows affected: " + rows);
         }
     }
 
@@ -142,13 +151,12 @@ public class Main {
         boolean check = false;
         System.out.println("Please enter the user_id of the account you would like to update: ");
         String inputId = scanner.nextLine();
-        String query = "select count(*) from account where user_id = ?";
+        String query = "select 1 from account where user_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, inputId);
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                if (rs.getInt(1) != 0)
-                    check = true;
+            if (rs.next()) {
+                check = true;
             }
         }
 
@@ -168,16 +176,42 @@ public class Main {
 
     private void databaseCreator(Connection connection) throws SQLException {
         System.out.println("Provide firstname: ");
-        String firstnameInput = scanner.nextLine();
+        String firstnameInput = scanner.nextLine().trim();
+        if (firstnameInput.isEmpty()){
+            System.out.println("Firstname can't be empty");
+            return;
+        }
         System.out.println("Provide lastname: ");
-        String lastnameInput = scanner.nextLine();
+        String lastnameInput = scanner.nextLine().trim();
+        if (lastnameInput.isEmpty()){
+            System.out.println("Lastname can't be empty");
+            return;
+        }
         System.out.println("Provide ssn: ");
-        String ssnInput = scanner.nextLine();
+        String ssnInput = scanner.nextLine().trim();
+        if (ssnInput.isEmpty()){
+            System.out.println("SSN can't be empty");
+            return;
+        }
         System.out.println("Provide password: ");
-        String passwordInput = scanner.nextLine();
+        String passwordInput = scanner.nextLine().trim();
+        if (passwordInput.isEmpty()){
+            System.out.println("Password can't be empty");
+            return;
+        }
         String firstPart = firstnameInput.substring(0, Math.min(2, firstnameInput.length()));
         String lastPart = lastnameInput.substring(0, Math.min(2, lastnameInput.length()));
         String nameInput = firstPart + lastPart;
+        String check = "select count(*) from  account where name = ? or ssn = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(check)) {
+            stmt.setString(1, nameInput);
+            stmt.setString(2, ssnInput);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                System.out.println("Account already exists.");
+                return;
+            }
+        }
         String query = "insert into account (first_name, last_name, ssn, password, name) values (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, firstnameInput);
