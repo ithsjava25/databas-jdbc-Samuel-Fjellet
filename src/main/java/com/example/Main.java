@@ -7,11 +7,8 @@ import java.util.Scanner;
 import static org.testcontainers.shaded.org.apache.commons.lang3.StringUtils.substring;
 
 public class Main {
-
     Scanner scanner = new Scanner(System.in);
     String temp = "1";
-
-
     static void main(String[] args) {
         if (isDevMode(args)) {
             DevDatabaseInitializer.start();
@@ -24,34 +21,21 @@ public class Main {
         String jdbcUrl = resolveConfig("APP_JDBC_URL", "APP_JDBC_URL");
         String dbUser = resolveConfig("APP_DB_USER", "APP_DB_USER");
         String dbPass = resolveConfig("APP_DB_PASS", "APP_DB_PASS");
-
-
-
         if (jdbcUrl == null || dbUser == null || dbPass == null) {
             throw new IllegalStateException(
                     "Missing DB configuration. Provide APP_JDBC_URL, APP_DB_USER, APP_DB_PASS " +
                             "as system properties (-Dkey=value) or environment variables.");
         }
-
-        //Todo: Starting point for your code
-
-            try (Connection connection = DriverManager.getConnection(
-                    jdbcUrl,
-                    dbUser,
-                    dbPass)) {
-
-                startUpLogIn(connection);
-                cliMenu(connection);
-
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-
-
-
+        try (Connection connection = DriverManager.getConnection(
+                jdbcUrl,
+                dbUser,
+                dbPass)) {
+            startUpLogIn(connection);
+            cliMenu(connection);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
-
-
 
     /**
      * Determines if the application is running in development mode based on system properties,
@@ -112,13 +96,11 @@ public class Main {
             cliWriter();
             System.out.println("Please provide the command line arguments to execute: ");
             String arg = scanner.nextLine();
-
             switch (arg) {
                 case "1":
                 case "List":
                     databaseLister(connection);
                     break;
-
                 case "2":
                 case "Get":
                     databaseGetter(connection);
@@ -133,7 +115,7 @@ public class Main {
                     break;
                 case "5":
                 case "Update":
-                    databaseUpdated(connection);
+                    databaseUpdater(connection);
                     break;
                 case "6":
                 case "Delete":
@@ -158,7 +140,7 @@ public class Main {
         }
     }
 
-    private void databaseUpdated(Connection connection) throws SQLException {
+    private void databaseUpdater(Connection connection) throws SQLException {
         boolean check = false;
         System.out.println("Please enter the user_id of the account you would like to update: ");
         String inputId = scanner.nextLine();
@@ -196,7 +178,6 @@ public class Main {
         System.out.println("Provide password: ");
         String passwordInput = scanner.nextLine();
         String nameInput = (substring(firstnameInput, 0, 2)).concat(substring(lastnameInput, 0, 2));
-
         String query = "insert into account (first_name, last_name, ssn, password, name) values (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, firstnameInput);
@@ -227,7 +208,6 @@ public class Main {
         System.out.println("Provide the mission id: ");
         String id = scanner.nextLine();
         String query = "select * from moon_mission where mission_id = ?";
-
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
