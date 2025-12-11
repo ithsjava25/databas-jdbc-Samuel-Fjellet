@@ -4,8 +4,6 @@ import java.sql.*;
 import java.util.Arrays;
 import java.util.Scanner;
 
-import static org.testcontainers.shaded.org.apache.commons.lang3.StringUtils.substring;
-
 public class Main {
     Scanner scanner = new Scanner(System.in);
     String temp = "1";
@@ -68,9 +66,9 @@ public class Main {
         boolean running = true;
         while (running) {
             System.out.println("Input Username: ");
-            String userName = scanner.next();
+            String userName = scanner.nextLine().trim();
             System.out.println("Input Password: ");
-            String password = scanner.next();
+            String password = scanner.nextLine().trim();
             String query = "select count(*) from account where name = ? and password = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, userName);
@@ -81,7 +79,7 @@ public class Main {
                         running = false;
                     } else {
                         System.out.println("Invalid username or password, would you like to exit? (0) ");
-                        temp = scanner.nextLine();
+                        temp = scanner.nextLine().trim();
                         if (temp.equals("0"))
                             running = false;
                     }
@@ -177,7 +175,9 @@ public class Main {
         String ssnInput = scanner.nextLine();
         System.out.println("Provide password: ");
         String passwordInput = scanner.nextLine();
-        String nameInput = (substring(firstnameInput, 0, 2)).concat(substring(lastnameInput, 0, 2));
+        String firstPart = firstnameInput.substring(0, Math.min(2, firstnameInput.length()));
+        String lastPart = lastnameInput.substring(0, Math.min(2, lastnameInput.length()));
+        String nameInput = firstPart + lastPart;
         String query = "insert into account (first_name, last_name, ssn, password, name) values (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, firstnameInput);
